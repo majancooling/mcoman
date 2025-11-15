@@ -3,9 +3,7 @@
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Majan Cooling - Professional AC Services</title>
-  <script src="/_sdk/element_sdk.js"></script>
-  <script src="/_sdk/data_sdk.js"></script>
+  <title>Majan Cooling - Professional AC Services</title><!-- Canva SDKs only load in Canva environment -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -242,9 +240,11 @@
     }
   </style>
   <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
  </head>
  <body class="min-h-full"><!-- Storage Mode Indicator -->
-  <div id="storage-indicator" class="storage-indicator"><span id="storage-mode">🔄 Initializing...</span>
+  <div id="storage-indicator" class="storage-indicator"><span id="storage-mode">🐙 GitHub Mode</span>
   </div><!-- Header -->
   <header class="bg-white shadow-lg sticky top-0 z-50 nav-slide-down">
    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -504,7 +504,7 @@
       <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>
       <p class="text-lg">No photos in the gallery yet.</p>
-      <p class="text-sm">Add your first photo using the form above!</p>
+      <p class="text-sm">Add your first photo using the admin panel!</p>
      </div>
     </div>
    </div><!-- Photo Modal -->
@@ -594,10 +594,10 @@
       <div id="form-message" class="mt-4 p-4 rounded-lg hidden"></div><!-- Message Storage Info (Admin Only - Hidden from public) -->
       <div id="admin-message-info" class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg" style="display: none;">
        <h5 class="font-semibold text-blue-900 mb-2">📋 Message Storage (Admin Only)</h5>
-       <p class="text-blue-800 text-sm mb-2">All contact form submissions are automatically saved to your data storage for easy management.</p>
+       <p class="text-blue-800 text-sm mb-2">All contact form submissions are automatically saved to your browser storage for easy management.</p>
        <div class="text-blue-700 text-sm">
         <p><strong>Total Messages:</strong> <span id="message-count">0</span></p>
-        <p><strong>Storage:</strong> <span id="storage-location">Canva Sheet</span> (accessible in your account)</p>
+        <p><strong>Storage:</strong> <span id="storage-location">Browser Storage</span> (accessible in developer tools)</p>
        </div>
       </div>
      </div><!-- Contact Info -->
@@ -676,29 +676,13 @@
    </div>
   </footer>
   <script>
-    // Configuration object for editable content
-    const defaultConfig = {
-      company_name: "Majan Cooling",
-      tagline: "Professional AC Solutions",
-      hero_title: "Expert Air Conditioning Services",
-      hero_subtitle: "Professional installation, maintenance, and repair services for residential and commercial air conditioning systems. Keep your space comfortable year-round.",
-      services_title: "Our Services",
-      gallery_title: "Our Work Gallery",
-      cta_button: "Book Now",
-      background_color: "#1e40af",
-      surface_color: "#ffffff",
-      text_color: "#374151",
-      primary_action_color: "#3b82f6",
-      secondary_action_color: "#10b981"
-    };
-
     // Global variables for gallery
     let allPhotos = [];
     let currentFilter = 'all';
     let currentPhotoForDeletion = null;
     let isAdminMode = false;
 
-    // GitHub/Fallback Storage System
+    // GitHub/Browser Storage System
     const GitHubStorage = {
       // Use localStorage as fallback when Canva SDK is not available
       save: function(key, data) {
@@ -741,27 +725,20 @@
       
       async init() {
         // Check if we're in Canva environment
-        this.isCanvaMode = !!(window.dataSdk);
+        this.isCanvaMode = false; // Always false for GitHub deployment
         
-        if (this.isCanvaMode) {
-          console.log('🎨 Running in Canva mode with Sheet storage');
-          const initResult = await window.dataSdk.init(dataHandler);
-          this.updateStorageIndicator('🎨 Canva Sheet');
-          return initResult.isOk;
-        } else {
-          console.log('🐙 Running in GitHub mode with localStorage');
-          // Load existing data from localStorage
-          this.loadFromLocalStorage();
-          this.updateStorageIndicator('🐙 Browser Storage');
-          return true;
-        }
+        console.log('🐙 Running in GitHub mode with localStorage');
+        // Load existing data from localStorage
+        this.loadFromLocalStorage();
+        this.updateStorageIndicator('🐙 Browser Storage');
+        return true;
       },
       
       updateStorageIndicator(mode) {
         const indicator = document.getElementById('storage-mode');
         const storageLocation = document.getElementById('storage-location');
         if (indicator) indicator.textContent = mode;
-        if (storageLocation) storageLocation.textContent = this.isCanvaMode ? 'Canva Sheet' : 'Browser Storage';
+        if (storageLocation) storageLocation.textContent = 'Browser Storage';
       },
       
       loadFromLocalStorage() {
@@ -774,38 +751,30 @@
       },
       
       async create(data) {
-        if (this.isCanvaMode && window.dataSdk) {
-          return await window.dataSdk.create(data);
+        // GitHub mode - use localStorage
+        const key = data.type === 'photo' ? 'majan_photos' : 'majan_contacts';
+        const result = GitHubStorage.save(key, data);
+        
+        if (result.success) {
+          // Refresh data display
+          this.loadFromLocalStorage();
+          return { isOk: true };
         } else {
-          // GitHub mode - use localStorage
-          const key = data.type === 'photo' ? 'majan_photos' : 'majan_contacts';
-          const result = GitHubStorage.save(key, data);
-          
-          if (result.success) {
-            // Refresh data display
-            this.loadFromLocalStorage();
-            return { isOk: true };
-          } else {
-            return { isOk: false, error: result.error };
-          }
+          return { isOk: false, error: result.error };
         }
       },
       
       async delete(data) {
-        if (this.isCanvaMode && window.dataSdk) {
-          return await window.dataSdk.delete(data);
+        // GitHub mode - use localStorage
+        const key = data.type === 'photo' ? 'majan_photos' : 'majan_contacts';
+        const result = GitHubStorage.delete(key, data.id);
+        
+        if (result.success) {
+          // Refresh data display
+          this.loadFromLocalStorage();
+          return { isOk: true };
         } else {
-          // GitHub mode - use localStorage
-          const key = data.type === 'photo' ? 'majan_photos' : 'majan_contacts';
-          const result = GitHubStorage.delete(key, data.id);
-          
-          if (result.success) {
-            // Refresh data display
-            this.loadFromLocalStorage();
-            return { isOk: true };
-          } else {
-            return { isOk: false, error: result.error };
-          }
+          return { isOk: false, error: result.error };
         }
       }
     };
@@ -829,8 +798,7 @@
         renderGallery();
         
         // Show storage mode indicator
-        const storageMode = StorageManager.isCanvaMode ? 'Canva Sheet' : 'Browser Storage';
-        console.log(`📊 Storage: ${storageMode} | Messages: ${contactMessages.length} | Photos: ${photos.length}`);
+        console.log(`📊 Storage: Browser Storage | Messages: ${contactMessages.length} | Photos: ${photos.length}`);
       }
     };
 
@@ -861,130 +829,124 @@
       if (adminMessageInfo) adminMessageInfo.style.display = 'block';
     }
 
-    // Initialize SDKs and animations when page loads
+    // Gallery Functions
+    function updateGalleryStats() {
+      const totalPhotos = allPhotos.length;
+      const installationCount = allPhotos.filter(p => p.photo_category === 'installation').length;
+      const maintenanceCount = allPhotos.filter(p => p.photo_category === 'maintenance').length;
+      const repairCount = allPhotos.filter(p => p.photo_category === 'repair').length;
+
+      const totalElement = document.getElementById('total-photos');
+      const installationElement = document.getElementById('installation-count');
+      const maintenanceElement = document.getElementById('maintenance-count');
+      const repairElement = document.getElementById('repair-count');
+
+      if (totalElement) totalElement.textContent = totalPhotos;
+      if (installationElement) installationElement.textContent = installationCount;
+      if (maintenanceElement) maintenanceElement.textContent = maintenanceCount;
+      if (repairElement) repairElement.textContent = repairCount;
+    }
+
+    function renderGallery() {
+      const galleryGrid = document.getElementById('gallery-grid');
+      const noPhotos = document.getElementById('no-photos');
+      
+      if (!galleryGrid || !noPhotos) return;
+      
+      // Filter photos based on current filter
+      const filteredPhotos = currentFilter === 'all' 
+        ? allPhotos 
+        : allPhotos.filter(photo => photo.photo_category === currentFilter);
+
+      // Clear existing photos (except no-photos message)
+      const existingPhotos = galleryGrid.querySelectorAll('.photo-card');
+      existingPhotos.forEach(photo => photo.remove());
+
+      if (filteredPhotos.length === 0) {
+        noPhotos.style.display = 'block';
+      } else {
+        noPhotos.style.display = 'none';
+        
+        filteredPhotos.forEach(photo => {
+          const photoCard = createPhotoCard(photo);
+          galleryGrid.appendChild(photoCard);
+        });
+      }
+    }
+
+    function createPhotoCard(photo) {
+      const card = document.createElement('div');
+      card.className = 'photo-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105';
+      card.dataset.photoId = photo.id;
+      
+      const date = new Date(photo.created_at);
+      const formattedDate = date.toLocaleDateString();
+      
+      card.innerHTML = `
+        <div class="aspect-w-4 aspect-h-3 relative">
+          <img src="${photo.photo_url}" alt="${photo.photo_title}" 
+               class="w-full h-48 object-cover"
+               onerror="this.src=''; this.alt='Image failed to load'; this.parentElement.innerHTML='<div class=\\'w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500\\'>Image not available</div>';">
+          <div class="absolute top-2 right-2">
+            <span class="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-medium capitalize">
+              ${photo.photo_category}
+            </span>
+          </div>
+        </div>
+        <div class="p-4">
+          <h4 class="font-semibold text-gray-900 mb-2 line-clamp-2">${photo.photo_title}</h4>
+          <p class="text-gray-600 text-sm mb-2 line-clamp-2">${photo.photo_description || 'No description'}</p>
+          <div class="flex justify-between items-center text-xs text-gray-500">
+            <span>${photo.photo_location || 'Location not specified'}</span>
+            <span>${formattedDate}</span>
+          </div>
+        </div>
+      `;
+      
+      card.addEventListener('click', () => openPhotoModal(photo));
+      return card;
+    }
+
+    function openPhotoModal(photo) {
+      const modal = document.getElementById('photo-modal');
+      const modalTitle = document.getElementById('modal-title');
+      const modalCategory = document.getElementById('modal-category');
+      const modalImage = document.getElementById('modal-image');
+      const modalDescription = document.getElementById('modal-description');
+      const modalLocation = document.getElementById('modal-location');
+      const modalDate = document.getElementById('modal-date');
+      
+      if (!modal || !modalTitle || !modalCategory || !modalImage || !modalDescription || !modalLocation || !modalDate) return;
+      
+      modalTitle.textContent = photo.photo_title;
+      modalCategory.textContent = photo.photo_category.charAt(0).toUpperCase() + photo.photo_category.slice(1);
+      modalImage.src = photo.photo_url;
+      modalImage.alt = photo.photo_title;
+      modalDescription.textContent = photo.photo_description || 'No description available';
+      modalLocation.textContent = photo.photo_location ? `📍 ${photo.photo_location}` : '';
+      modalDate.textContent = `Added: ${new Date(photo.created_at).toLocaleDateString()}`;
+      
+      currentPhotoForDeletion = photo;
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePhotoModal() {
+      const modal = document.getElementById('photo-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        currentPhotoForDeletion = null;
+      }
+    }
+
+    // Initialize everything when page loads
     document.addEventListener('DOMContentLoaded', async function() {
       // Check admin access first
       checkAdminAccess();
       
       // Initialize Universal Storage System
       await StorageManager.init();
-
-      // Initialize Element SDK
-      if (window.elementSdk) {
-        await window.elementSdk.init({
-          defaultConfig,
-          onConfigChange: async (config) => {
-            // Update text content
-            const companyName = document.getElementById('company-name');
-            if (companyName) companyName.textContent = config.company_name || defaultConfig.company_name;
-            
-            const tagline = document.getElementById('tagline');
-            if (tagline) tagline.textContent = config.tagline || defaultConfig.tagline;
-            
-            const heroTitle = document.getElementById('hero-title');
-            if (heroTitle) heroTitle.textContent = config.hero_title || defaultConfig.hero_title;
-            
-            const heroSubtitle = document.getElementById('hero-subtitle');
-            if (heroSubtitle) heroSubtitle.textContent = config.hero_subtitle || defaultConfig.hero_subtitle;
-            
-            const servicesTitle = document.getElementById('services-title');
-            if (servicesTitle) servicesTitle.textContent = config.services_title || defaultConfig.services_title;
-            
-            const galleryTitle = document.getElementById('gallery-title');
-            if (galleryTitle) galleryTitle.textContent = config.gallery_title || defaultConfig.gallery_title;
-            
-            const ctaButton = document.getElementById('cta-button');
-            if (ctaButton) ctaButton.textContent = config.cta_button || defaultConfig.cta_button;
-
-            // Update colors
-            const backgroundColor = config.background_color || defaultConfig.background_color;
-            const surfaceColor = config.surface_color || defaultConfig.surface_color;
-            const textColor = config.text_color || defaultConfig.text_color;
-            const primaryActionColor = config.primary_action_color || defaultConfig.primary_action_color;
-            const secondaryActionColor = config.secondary_action_color || defaultConfig.secondary_action_color;
-
-            // Apply background color to hero section
-            const heroSection = document.querySelector('.gradient-bg');
-            if (heroSection) {
-              heroSection.style.background = `linear-gradient(135deg, ${backgroundColor} 0%, ${primaryActionColor} 100%)`;
-            }
-
-            // Apply surface color to cards and forms
-            const surfaces = document.querySelectorAll('.bg-white');
-            surfaces.forEach(surface => {
-              surface.style.backgroundColor = surfaceColor;
-            });
-
-            // Apply text color
-            const textElements = document.querySelectorAll('.text-gray-900, .text-gray-700, .text-gray-600');
-            textElements.forEach(element => {
-              element.style.color = textColor;
-            });
-
-            // Apply primary action color to buttons
-            const primaryButtons = document.querySelectorAll('.bg-blue-600, .hover\\:bg-blue-700');
-            primaryButtons.forEach(button => {
-              button.style.backgroundColor = primaryActionColor;
-            });
-
-            // Apply secondary action color to accents
-            const secondaryElements = document.querySelectorAll('.text-green-600, .bg-green-100');
-            secondaryElements.forEach(element => {
-              if (element.classList.contains('bg-green-100')) {
-                element.style.backgroundColor = secondaryActionColor + '20'; // 20% opacity
-              } else {
-                element.style.color = secondaryActionColor;
-              }
-            });
-          },
-          mapToCapabilities: (config) => ({
-            recolorables: [
-              {
-                get: () => config.background_color || defaultConfig.background_color,
-                set: (value) => {
-                  window.elementSdk.setConfig({ background_color: value });
-                }
-              },
-              {
-                get: () => config.surface_color || defaultConfig.surface_color,
-                set: (value) => {
-                  window.elementSdk.setConfig({ surface_color: value });
-                }
-              },
-              {
-                get: () => config.text_color || defaultConfig.text_color,
-                set: (value) => {
-                  window.elementSdk.setConfig({ text_color: value });
-                }
-              },
-              {
-                get: () => config.primary_action_color || defaultConfig.primary_action_color,
-                set: (value) => {
-                  window.elementSdk.setConfig({ primary_action_color: value });
-                }
-              },
-              {
-                get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
-                set: (value) => {
-                  window.elementSdk.setConfig({ secondary_action_color: value });
-                }
-              }
-            ],
-            borderables: [],
-            fontEditable: undefined,
-            fontSizeable: undefined
-          }),
-          mapToEditPanelValues: (config) => new Map([
-            ["company_name", config.company_name || defaultConfig.company_name],
-            ["tagline", config.tagline || defaultConfig.tagline],
-            ["hero_title", config.hero_title || defaultConfig.hero_title],
-            ["hero_subtitle", config.hero_subtitle || defaultConfig.hero_subtitle],
-            ["services_title", config.services_title || defaultConfig.services_title],
-            ["gallery_title", config.gallery_title || defaultConfig.gallery_title],
-            ["cta_button", config.cta_button || defaultConfig.cta_button]
-          ])
-        });
-      }
 
       // Mobile menu functionality
       const mobileMenuButton = document.getElementById('mobile-menu-button');
@@ -1037,7 +999,7 @@
             if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
               mobileMenu.classList.add('hidden');
               mobileMenu.classList.remove('show');
-              mobileMenuButton.classList.remove('hamburger-active');
+              if (mobileMenuButton) mobileMenuButton.classList.remove('hamburger-active');
             }
           }
         });
@@ -1055,9 +1017,9 @@
           e.preventDefault();
           
           // Show loading state
-          submitText.classList.add('hidden');
-          submitLoading.classList.remove('hidden');
-          submitBtn.disabled = true;
+          if (submitText) submitText.classList.add('hidden');
+          if (submitLoading) submitLoading.classList.remove('hidden');
+          if (submitBtn) submitBtn.disabled = true;
           
           // Get form data
           const formData = new FormData(contactForm);
@@ -1077,9 +1039,11 @@
             
             if (result.isOk) {
               // Show success message
-              formMessage.className = 'mt-4 p-4 rounded-lg bg-green-50 border border-green-200 text-green-800';
-              formMessage.textContent = 'Thank you! Your message has been sent successfully. We\'ll contact you soon.';
-              formMessage.classList.remove('hidden');
+              if (formMessage) {
+                formMessage.className = 'mt-4 p-4 rounded-lg bg-green-50 border border-green-200 text-green-800';
+                formMessage.textContent = 'Thank you! Your message has been sent successfully. We\'ll contact you soon.';
+                formMessage.classList.remove('hidden');
+              }
               
               // Reset form
               contactForm.reset();
@@ -1088,121 +1052,23 @@
             }
           } catch (error) {
             // Show error message
-            formMessage.className = 'mt-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800';
-            formMessage.textContent = 'Sorry, there was an error sending your message. Please try calling us directly at +968 9282 0633.';
-            formMessage.classList.remove('hidden');
+            if (formMessage) {
+              formMessage.className = 'mt-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800';
+              formMessage.textContent = 'Sorry, there was an error sending your message. Please try calling us directly at +968 9282 0633.';
+              formMessage.classList.remove('hidden');
+            }
           } finally {
             // Reset button state
-            submitText.classList.remove('hidden');
-            submitLoading.classList.add('hidden');
-            submitBtn.disabled = false;
+            if (submitText) submitText.classList.remove('hidden');
+            if (submitLoading) submitLoading.classList.add('hidden');
+            if (submitBtn) submitBtn.disabled = false;
             
             // Hide message after 5 seconds
             setTimeout(() => {
-              formMessage.classList.add('hidden');
+              if (formMessage) formMessage.classList.add('hidden');
             }, 5000);
           }
         });
-      }
-
-      // Gallery Functions
-      function updateGalleryStats() {
-        const totalPhotos = allPhotos.length;
-        const installationCount = allPhotos.filter(p => p.photo_category === 'installation').length;
-        const maintenanceCount = allPhotos.filter(p => p.photo_category === 'maintenance').length;
-        const repairCount = allPhotos.filter(p => p.photo_category === 'repair').length;
-
-        document.getElementById('total-photos').textContent = totalPhotos;
-        document.getElementById('installation-count').textContent = installationCount;
-        document.getElementById('maintenance-count').textContent = maintenanceCount;
-        document.getElementById('repair-count').textContent = repairCount;
-      }
-
-      function renderGallery() {
-        const galleryGrid = document.getElementById('gallery-grid');
-        const noPhotos = document.getElementById('no-photos');
-        
-        // Filter photos based on current filter
-        const filteredPhotos = currentFilter === 'all' 
-          ? allPhotos 
-          : allPhotos.filter(photo => photo.photo_category === currentFilter);
-
-        // Clear existing photos (except no-photos message)
-        const existingPhotos = galleryGrid.querySelectorAll('.photo-card');
-        existingPhotos.forEach(photo => photo.remove());
-
-        if (filteredPhotos.length === 0) {
-          noPhotos.style.display = 'block';
-        } else {
-          noPhotos.style.display = 'none';
-          
-          filteredPhotos.forEach(photo => {
-            const photoCard = createPhotoCard(photo);
-            galleryGrid.appendChild(photoCard);
-          });
-        }
-      }
-
-      function createPhotoCard(photo) {
-        const card = document.createElement('div');
-        card.className = 'photo-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105';
-        card.dataset.photoId = photo.id;
-        
-        const date = new Date(photo.created_at);
-        const formattedDate = date.toLocaleDateString();
-        
-        card.innerHTML = `
-          <div class="aspect-w-4 aspect-h-3 relative">
-            <img src="${photo.photo_url}" alt="${photo.photo_title}" 
-                 class="w-full h-48 object-cover"
-                 onerror="this.src=''; this.alt='Image failed to load'; this.parentElement.innerHTML='<div class=\\'w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500\\'>Image not available</div>';">
-            <div class="absolute top-2 right-2">
-              <span class="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-medium capitalize">
-                ${photo.photo_category}
-              </span>
-            </div>
-          </div>
-          <div class="p-4">
-            <h4 class="font-semibold text-gray-900 mb-2 line-clamp-2">${photo.photo_title}</h4>
-            <p class="text-gray-600 text-sm mb-2 line-clamp-2">${photo.photo_description || 'No description'}</p>
-            <div class="flex justify-between items-center text-xs text-gray-500">
-              <span>${photo.photo_location || 'Location not specified'}</span>
-              <span>${formattedDate}</span>
-            </div>
-          </div>
-        `;
-        
-        card.addEventListener('click', () => openPhotoModal(photo));
-        return card;
-      }
-
-      function openPhotoModal(photo) {
-        const modal = document.getElementById('photo-modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalCategory = document.getElementById('modal-category');
-        const modalImage = document.getElementById('modal-image');
-        const modalDescription = document.getElementById('modal-description');
-        const modalLocation = document.getElementById('modal-location');
-        const modalDate = document.getElementById('modal-date');
-        
-        modalTitle.textContent = photo.photo_title;
-        modalCategory.textContent = photo.photo_category.charAt(0).toUpperCase() + photo.photo_category.slice(1);
-        modalImage.src = photo.photo_url;
-        modalImage.alt = photo.photo_title;
-        modalDescription.textContent = photo.photo_description || 'No description available';
-        modalLocation.textContent = photo.photo_location ? `📍 ${photo.photo_location}` : '';
-        modalDate.textContent = `Added: ${new Date(photo.created_at).toLocaleDateString()}`;
-        
-        currentPhotoForDeletion = photo;
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function closePhotoModal() {
-        const modal = document.getElementById('photo-modal');
-        modal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
-        currentPhotoForDeletion = null;
       }
 
       // Photo form submission (Admin only)
@@ -1218,17 +1084,19 @@
           
           // Check photo limit
           if (allPhotos.length >= 999) {
-            photoFormMessage.className = 'mt-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800';
-            photoFormMessage.textContent = 'Maximum limit of 999 photos reached. Please delete some photos first.';
-            photoFormMessage.classList.remove('hidden');
-            setTimeout(() => photoFormMessage.classList.add('hidden'), 5000);
+            if (photoFormMessage) {
+              photoFormMessage.className = 'mt-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800';
+              photoFormMessage.textContent = 'Maximum limit of 999 photos reached. Please delete some photos first.';
+              photoFormMessage.classList.remove('hidden');
+              setTimeout(() => photoFormMessage.classList.add('hidden'), 5000);
+            }
             return;
           }
           
           // Show loading state
-          addPhotoText.classList.add('hidden');
-          addPhotoLoading.classList.remove('hidden');
-          addPhotoBtn.disabled = true;
+          if (addPhotoText) addPhotoText.classList.add('hidden');
+          if (addPhotoLoading) addPhotoLoading.classList.remove('hidden');
+          if (addPhotoBtn) addPhotoBtn.disabled = true;
           
           // Get form data
           const formData = new FormData(photoForm);
@@ -1249,9 +1117,11 @@
             
             if (result.isOk) {
               // Show success message
-              photoFormMessage.className = 'mt-4 p-4 rounded-lg bg-green-50 border border-green-200 text-green-800';
-              photoFormMessage.textContent = 'Photo added successfully to your gallery!';
-              photoFormMessage.classList.remove('hidden');
+              if (photoFormMessage) {
+                photoFormMessage.className = 'mt-4 p-4 rounded-lg bg-green-50 border border-green-200 text-green-800';
+                photoFormMessage.textContent = 'Photo added successfully to your gallery!';
+                photoFormMessage.classList.remove('hidden');
+              }
               
               // Reset form
               photoForm.reset();
@@ -1260,18 +1130,20 @@
             }
           } catch (error) {
             // Show error message
-            photoFormMessage.className = 'mt-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800';
-            photoFormMessage.textContent = 'Sorry, there was an error adding the photo. Please try again.';
-            photoFormMessage.classList.remove('hidden');
+            if (photoFormMessage) {
+              photoFormMessage.className = 'mt-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800';
+              photoFormMessage.textContent = 'Sorry, there was an error adding the photo. Please try again.';
+              photoFormMessage.classList.remove('hidden');
+            }
           } finally {
             // Reset button state
-            addPhotoText.classList.remove('hidden');
-            addPhotoLoading.classList.add('hidden');
-            addPhotoBtn.disabled = false;
+            if (addPhotoText) addPhotoText.classList.remove('hidden');
+            if (addPhotoLoading) addPhotoLoading.classList.add('hidden');
+            if (addPhotoBtn) addPhotoBtn.disabled = false;
             
             // Hide message after 5 seconds
             setTimeout(() => {
-              photoFormMessage.classList.add('hidden');
+              if (photoFormMessage) photoFormMessage.classList.add('hidden');
             }, 5000);
           }
         });
@@ -1343,7 +1215,7 @@
               throw new Error('Failed to delete photo');
             }
           } catch (error) {
-            // Show inline error message instead of alert
+            // Show inline error message
             const errorMsg = document.createElement('div');
             errorMsg.className = 'mt-2 p-2 bg-red-100 border border-red-300 text-red-700 text-sm rounded';
             errorMsg.textContent = 'Error deleting photo. Please try again.';
@@ -1399,14 +1271,7 @@
           setTimeout(() => indicator.style.display = 'none', 300);
         }
       }, 5000);
-
-      // Make functions globally available
-      window.updateGalleryStats = updateGalleryStats;
-      window.renderGallery = renderGallery;
-      window.createPhotoCard = createPhotoCard;
-      window.openPhotoModal = openPhotoModal;
-      window.closePhotoModal = closePhotoModal;
     });
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99ee4490f5b67fec',t:'MTc2MzIwNDY2Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99ee831d96c017b7',t:'MTc2MzIwNzIyOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
