@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
- <head>
+ <head><script src="/_sdk/telemetry_sdk.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Majan Cooling - Professional AC Services</title><!-- Canva SDKs only load in Canva environment -->
@@ -940,18 +940,39 @@
 
     // Admin access control - check for admin mode
     function checkAdminAccess() {
-      // Check for admin parameter in URL or localStorage
+      // Check for admin parameter in URL ONLY (not localStorage)
       const urlParams = new URLSearchParams(window.location.search);
       const adminParam = urlParams.get('admin');
-      const storedAdmin = localStorage.getItem('majanCoolingAdmin');
       
-      if (adminParam === 'true' || storedAdmin === 'true') {
+      // ONLY enable admin mode if ?admin=true is in the URL
+      if (adminParam === 'true') {
         isAdminMode = true;
-        if (adminParam === 'true') {
-          localStorage.setItem('majanCoolingAdmin', 'true');
-        }
         showAdminControls();
+        addAdminLogoutButton();
       }
+    }
+    
+    // Add logout button for admin mode
+    function addAdminLogoutButton() {
+      const adminPhotoSection = document.getElementById('admin-photo-section');
+      if (!adminPhotoSection) return;
+      
+      // Check if logout button already exists
+      if (document.getElementById('admin-logout-btn')) return;
+      
+      const logoutBtn = document.createElement('button');
+      logoutBtn.id = 'admin-logout-btn';
+      logoutBtn.className = 'mb-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200';
+      logoutBtn.textContent = '🚪 Logout from Admin Mode';
+      logoutBtn.onclick = function(e) {
+        e.preventDefault();
+        // Remove admin parameter from URL without reloading
+        window.history.replaceState({}, document.title, window.location.pathname);
+        // Reload page without admin mode
+        location.reload();
+      };
+      
+      adminPhotoSection.parentElement.insertBefore(logoutBtn, adminPhotoSection);
     }
 
     function showAdminControls() {
@@ -1159,13 +1180,18 @@
           
           // Get form data
           const formData = new FormData(contactForm);
+          const name = formData.get('name');
+          const phone = formData.get('phone');
+          const service = formData.get('service');
+          const message = formData.get('message');
+          
           const contactData = {
             id: Date.now().toString(),
             type: 'contact',
-            name: formData.get('name'),
-            phone: formData.get('phone'),
-            service: formData.get('service'),
-            message: formData.get('message'),
+            name: name,
+            phone: phone,
+            service: service,
+            message: message,
             created_at: new Date().toISOString()
           };
           
@@ -1174,10 +1200,17 @@
             const result = await StorageManager.create(contactData);
             
             if (result.isOk) {
+              // Send to WhatsApp
+              const whatsappMessage = `New Contact Form Inquiry\n\n👤 Name: ${name}\n📞 Phone: ${phone}\n🔧 Service: ${service}\n💬 Message: ${message}`;
+              const whatsappUrl = `https://wa.me/96892820633?text=${encodeURIComponent(whatsappMessage)}`;
+              
+              // Open WhatsApp in new window (notification will be received on your phone)
+              window.open(whatsappUrl, '_blank', 'width=600,height=400');
+              
               // Show success message
               if (formMessage) {
                 formMessage.className = 'mt-4 p-4 rounded-lg bg-green-50 border border-green-200 text-green-800';
-                formMessage.textContent = 'Thank you! Your message has been sent successfully. We\'ll contact you soon.';
+                formMessage.textContent = '✅ Message sent successfully! We\'ve received your inquiry and will WhatsApp you shortly at ' + phone + '.';
                 formMessage.classList.remove('hidden');
               }
               
@@ -1190,7 +1223,7 @@
             // Show error message
             if (formMessage) {
               formMessage.className = 'mt-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800';
-              formMessage.textContent = 'Sorry, there was an error sending your message. Please try calling us directly at +968 9282 0633.';
+              formMessage.textContent = 'Sorry, there was an error. Please try calling us directly at +968 9282 0633 or WhatsApp us.';
               formMessage.classList.remove('hidden');
             }
           } finally {
@@ -1409,5 +1442,5 @@
       }, 5000);
     });
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e678a39114858e7',t:'MTc3NTIxMzcxNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0b70387520e7fb1',t:'MTc4MTQxNTc2OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
